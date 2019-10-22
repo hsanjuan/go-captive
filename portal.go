@@ -47,14 +47,15 @@ type Portal struct {
 	// to a valid path. The certificate must be valid for the PortalDomain.
 	CertFile string
 	KeyFile  string
-	// The path on disk of the Portal containing the website shown to
-	// unlogged users and seemingly running on PortalDomain.
+	// The path on disk of the Portal website shown to unlogged users and
+	// seemingly running on PortalDomain. This should be a folder with at
+	// least an index.html in it and is served using http.FileServer.
 	WebPath string
 	// The path to handle users logins and potentially allow HTTP and HTTPs
 	// traffic. POST requests will trigger the LoginHandler and return
-	// either 201 (Accepted) or 401 (Unauthorized).
+	// either 202 (Accepted) or 401 (Unauthorized).
 	// GET requests will return 204 for authorized clients, or 403
-	// for the rest.
+	// for the rest. This should not be "/".
 	LoginPath string
 	// The captive's portal domain. Users get redirected here and served
 	// the contents from the WebRoot directory. This domain must exist and
@@ -70,6 +71,12 @@ type Portal struct {
 	// should be let through or false otherwise. Not setting this will
 	// authenticate all clients that request it.
 	LoginHandler func(loginReq *http.Request) bool
+	// An optional path to run the user-provided CustomHandler. This
+	// allows the Portal to implement any other server-side functionality.
+	CustomHandlerPath string
+	// An optional custom http.HandleFunc to be called for
+	// requests to CustomHandlerPath
+	CustomHandler func(w http.ResponseWriter, r *http.Request)
 
 	loginTarget    tcpproxy.Target
 	httpProxy      tcpproxy.Target
@@ -92,6 +99,10 @@ func (p *Portal) setup() error {
 
 	if p.LoginPath == "" || p.LoginPath == "/" {
 		return errors.New("LoginPath invalid")
+	}
+
+	if chp := p.CustomHandlerPath; chp == p.LoginPath || chp == "/" {
+		return errors.New("CustomHandlerPath invalid")
 	}
 
 	if p.CertFile != "" {
@@ -189,6 +200,10 @@ func (p *Portal) portalServer() error {
 		}
 		w.WriteHeader(http.StatusUnauthorized)
 	})
+
+	if p.CustomHandler != nil && p.CustomHandlerPath != "" {
+		mux.HandleFunc(p.CustomHandlerPath, p.CustomHandler)
+	}
 
 	fs := http.FileServer(http.Dir(p.WebPath))
 	noCache := &noCacheHandler{fs}
