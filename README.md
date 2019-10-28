@@ -6,7 +6,16 @@ A very simple library to build captive portals.
 
 The portal works as a man-in-the-middle TCP proxy. Non-allowed clients are forwarded to a handler which triggers an HTTP redirect to the user-provided portal server. This means your application needs to be configured as a traffic proxy, receiving all the traffic of the clients (see below).
 
-Modern software like Firefox or Android should automatically detect a captive-portal and offer the user to redirect to it. Otherwise, any unallowed HTTP traffic will be redirected to the portal. Unallowed HTTPs is terminated.
+Modern browsers and operating systems automatically detect a captive-portal and offer the user to redirect to it. [RFC7710](https://tools.ietf.org/html/rfc7710) specifies how a network can inform clients about the existence of a captive-portal. Prior to this, clients request predefined webpages to detect the existence of such portals by the response:
+
+Product | Portal Detection Page | Documentation
+--------|-----------------------|--------------
+Mozilla Firefox | http://detectportal.firefox.com/success.txt | [wiki.mozilla.org](https://wiki.mozilla.org/QA/Captive_Portals)
+Chrom(e\|ium) | http://clients3.google.com/generate_204 / http://connectivitycheck.gstatic.com/generate_204 | [chromium.org](http://www.chromium.org/chromium-os/chromiumos-design-docs/network-portal-detection)
+Windows | http://www.msftncsi.com/ncsi.txt / http://www.microsoftconnecttest.com/connecttest.txt / http://ipv6.microsoftconnecttest.com/connecttest.txt | [technet.microsoft.com](https://blogs.technet.microsoft.com/netgeeks/2018/02/20/why-do-i-get-an-internet-explorer-or-edge-popup-open-when-i-get-connected-to-my-corpnet-or-a-public-network/) / [msdn.microsoft.com](https://blogs.msdn.microsoft.com/ieinternals/2011/05/18/detecting-captive-network-portals/) / [docs.microsoft.com](https://docs.microsoft.com/en-us/windows-hardware/drivers/mobilebroadband/captive-portals)
+iOS / macOS | http://captive.apple.com | [support.apple.com](https://support.apple.com/en-us/HT204497)
+
+Otherwise, any unallowed HTTP traffic will be redirected to the portal. Unallowed HTTPs is terminated.
 
 ## Usage
 
